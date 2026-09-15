@@ -7,7 +7,7 @@ on:
 jobs:
   mirror:
     name: Mirror to Epitech repository
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     if: github.repository == 'IlonaDolbec/Dashboard'
     steps:
       - uses: actions/checkout@v4
