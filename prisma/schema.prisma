@@ -29,6 +29,9 @@ model User {
   accounts      Account[]
   role          Role      @default(USER)
 
+  subscriptions Subscription[]
+  widgetInstances WidgetInstance[]
+
   @@unique([email])
   @@map("user")
 }
@@ -79,4 +82,71 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+model Service {
+  id           String   @id @default(cuid())
+  key          String   @unique
+  name         String
+  description  String?
+  requiresAuth Boolean  @default(true)
+
+  widgetTypes   WidgetType[]
+  subscriptions Subscription[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model WidgetType {
+  id           String   @id @default(cuid())
+  key          String
+  name         String
+  description  String?
+  paramsSchema Json
+
+  serviceId String
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  instances WidgetInstance[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([serviceId, key])
+}
+
+model Subscription {
+  id           String   @id @default(cuid())
+  subscribedAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade) // User = modèle généré par BetterAuth
+
+  serviceId String
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  accountId String?
+  @@unique([userId, serviceId])
+}
+
+model WidgetInstance {
+  id                 String    @id @default(cuid())
+  config             Json
+  refreshRateSeconds Int
+  positionX          Int
+  positionY          Int
+  width              Int       @default(1)
+  height             Int       @default(1)
+  lastData           Json?
+  lastRefreshedAt    DateTime?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  widgetTypeId String
+  widgetType   WidgetType @relation(fields: [widgetTypeId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
