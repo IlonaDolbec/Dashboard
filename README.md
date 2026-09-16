@@ -4,65 +4,44 @@ A web application that lets each user build their own customizable dashboard: ad
 
 ## Tech stack
 
-| Component | Technology |
+| Layer | Choice |
 |---|---|
-| Web framework | [Next.js](https://nextjs.org/) 16 (React 19) |
-| Database | PostgreSQL 16 |
-| ORM | [Prisma](https://www.prisma.io/) 7 |
-| Styling | Tailwind CSS 4 |
-| Containerization | Docker / Docker Compose |
 | Language | TypeScript |
+| Backend | Next.js (Route Handlers) |
+| Frontend | React + Tailwind CSS |
+| Database | PostgreSQL, containerized via Docker |
+| ORM | Prisma 7 |
+| Authentication | Better Auth (credentials + OAuth 2.0 / OIDC) |
 
-## Prerequisites
+The full rationale behind each choice is documented in [`docs/technical_stack.md`](docs/technical_stack.md).
 
-- [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/)
-- or, for fully local development: [Node.js](https://nodejs.org/) 22+, [npm](https://www.npmjs.com/), and an accessible PostgreSQL 16 instance
+## Getting started
 
-## Installation
+### With Docker (recommended)
 
-### Option A: With Docker (recommended)
+```bash
+git clone <repo-url>
+cd <repository>
+cp .env.example .env      # fill in the required values, see below
+docker compose up -d --build
+```
 
-1. Clone the repository:
-   ```bash
-   git clone <repo-url>
-   cd <repository>
-   ```
+The `server` container applies pending Prisma migrations automatically on startup, no extra step needed.
 
-2. Copy the example file and fill it in (see the Environment variables section):
-   ```bash
-   cp .env.example .env
-   ```
+Full command reference (logs, rebuilding, debugging): [`docs/DOCKER.md`](docs/DOCKER.md).
 
-3. Build the images:
-   ```bash
-   docker compose build
-   ```
+### Without Docker (local dev)
 
-4. Start the containers:
-   ```bash
-   docker compose up -d
-   ```
+```bash
+nvm use 22
+npm install
+cp .env.example .env
+npx prisma dev
+npx prisma migrate dev --config prisma7.config.ts
+npm run dev
+```
 
-### Option B: Locally, without Docker
-
-1. Clone the repository and install dependencies:
-   ```bash
-   git clone <repo-url>
-   cd <repository>
-   npm install
-   ```
-
-2. Copy `.env.example` to `.env` and fill in the variables, pointing `DATABASE_URL` to your own local PostgreSQL instance.
-
-3. Apply the migrations:
-   ```bash
-   npx prisma migrate dev --config prisma7.config.ts
-   ```
-
-4. Start the development server:
-   ```bash
-   npm run dev
-   ```
+Full Prisma / Better Auth command reference: [`docs/DATABASE.md`](docs/DATABASE.md).
 
 ## Environment variables
 
@@ -73,21 +52,21 @@ All variables are documented in `.env.example`. Summary:
 | `DB_USER` | PostgreSQL user |
 | `DB_PASSWORD` | PostgreSQL password |
 | `DB_NAME` | Database name |
-| `DB_PORT` | Host-side port exposed for PostgreSQL (the container always listens internally on `5432`) |
-| `SERVER_PORT` | Host-side port exposed for the application (the container always listens internally on `8080`) |
-| `DATABASE_URL` | Prisma connection string, must match the `DB_*` values above |
+| `DB_PORT` | Host-side port exposed for PostgreSQL |
+| `SERVER_PORT` | Host-side port exposed for the application |
+| `DATABASE_URL` | Prisma connection string |
+| `BETTER_AUTH_SECRET` | Secret used by Better Auth to sign sessions and hash passwords. Generate with `openssl rand -base64 32` |
+| `BETTER_AUTH_URL` | Base URL of the application (e.g. `http://localhost:8080`) |
 
-> ⚠️ Never commit your real `.env` file — only `.env.example` should be version-controlled.
+> ⚠️ Never commit your real `.env` file, only `.env.example` should be version-controlled.
 
 ## Running the project
 
-Once `docker compose up -d` has run (or `npm run dev` locally), the application is available at:
+Once the containers are up (or `npm run dev` locally), the application is available at:
 
 ```
 http://localhost:<SERVER_PORT>
 ```
-
-(replace `<SERVER_PORT>` with the value defined in your `.env`, default `8080`).
 
 ## Checking that everything works
 
@@ -95,12 +74,6 @@ The server exposes a diagnostic endpoint at the root, `/about.json`, which retur
 
 ```bash
 curl http://localhost:<SERVER_PORT>/about.json
-```
-
-To follow the server logs live (useful for debugging a startup issue):
-
-```bash
-docker compose logs -f server
 ```
 
 ## Available services & widgets
@@ -111,13 +84,10 @@ docker compose logs -f server
 |---|---|---|---|
 | _to be filled in_ | _to be filled in_ | _to be filled in_ | _to be filled in_ |
 
-## Useful commands
 
-| Command | Effect |
-|---|---|
-| `docker compose build` | Rebuilds the images |
-| `docker compose up -d` | Starts the containers in the background |
-| `docker compose down` | Stops and removes the containers |
-| `docker compose logs -f server` | Follows the server logs live |
-| `npx prisma studio --config prisma7.config.ts` | GUI to browse the database |
-| `npx prisma migrate dev --config prisma7.config.ts` | Creates and applies a new migration (dev) |
+## Documentation
+
+- [`docs/technical_stack.md`](docs/technical_stack.md), why each technology was chosen, and the simplified architecture diagram
+- [`docs/DATABASE.md`](docs/DATABASE.md), Prisma and Better Auth commands (migrations, client generation, Prisma Studio, etc.)
+- [`docs/DOCKER.md`](docs/DOCKER.md), Docker Compose commands (build, logs, debugging)
+- [`docs/pull_request.md`](docs/pull_request.md), required pull request template
