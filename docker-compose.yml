@@ -17,21 +17,20 @@ services:
       timeout: 5s
       retries: 5
 
-  # TODO: replace with the real backend service once it lives in backend/
-  # server:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile
-  #   restart: always
-  #   ports:
-  #     - "${SERVER_PORT}:8080"
-  #   env_file:
-  #     - .env
-  #   environment:
-  #     - PORT=8080
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
+  server:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "${SERVER_PORT}:8080"
+    env_file:
+      - .env
+    environment:
+      - PORT=8080
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   frontend:
     build:
