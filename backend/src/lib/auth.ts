@@ -12,6 +12,15 @@ const frontendUrl = process.env.FRONTEND_URL ?? "http://localhost:5173";
 
 export const auth = betterAuth({
     trustedOrigins: [frontendUrl],
+    rateLimit: {
+      enabled: true,
+      storage: "memory",
+    },
+    advanced: {
+      ipAddress: {
+        ipAddressHeaders: ["x-forwarded-for"],
+      }
+    },
     database: prismaAdapter(prisma, {
         provider: "postgresql",
     }),
@@ -31,6 +40,19 @@ export const auth = betterAuth({
             });
         },
     },
+    socialProviders: {
+      google: {
+        clientId: process.env.GOOGLE_CLIENT_ID as string,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+      },
+    },
+    account: {
+      encryptOAuthTokens: true,
+      accountLinking: {
+        enabled: true,
+        trustedProviders: ["google"],
+      },
+    },
     plugins: [
         admin({
             roles: {
@@ -40,7 +62,7 @@ export const auth = betterAuth({
             defaultRole: "USER",
             adminRoles: ["ADMIN"],
             bannedUserMessage:
-                "Ce compte a été désactivé. Contactez un administrateur si vous pensez qu'il s'agit d'une erreur.",
+                "This account has been banned. Contact an administrator if you believe it is an error.",
         }),
     ],
 });
