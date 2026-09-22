@@ -84,6 +84,14 @@ export function LoginForm() {
             >
                 {pending ? "Logging in..." : "Log in"}
             </button>
+            <button
+                className="mt-2 rounded-md bg-[var(--accent)] px-4 py-2 text-sm font-medium text-white transition hover:bg-[var(--accent-hover)] disabled:opacity-35"
+                onClick={() => authClient.signIn.social({
+                    provider: "google",
+                    callbackURL: `${window.location.origin}/dashboard`,
+                })}>
+                Continue with Google
+            </button>
         </form>
     );
 }
