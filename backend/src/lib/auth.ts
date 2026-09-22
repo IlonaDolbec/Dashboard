@@ -12,6 +12,15 @@ const frontendUrl = process.env.FRONTEND_URL ?? "http://localhost:5173";
 
 export const auth = betterAuth({
     trustedOrigins: [frontendUrl],
+    rateLimit: {
+      enabled: true,
+      storage: "memory",
+    },
+    advanced: {
+      ipAddress: {
+        ipAddressHeaders: ["x-forwarded-for"],
+      }
+    },
     database: prismaAdapter(prisma, {
         provider: "postgresql",
     }),
