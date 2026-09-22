@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 8080",
     "build": "next build",
     "start": "next start -p $PORT",
     "postinstall": "prisma generate --config prisma7.config.ts"
@@ -10,14 +10,13 @@
     "@prisma/client": "^7.10.0",
     "better-auth": "^1.7.5",
     "next": "^16.3.5",
+    "nodemailer": "^10.0.10",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.3.3",
-    "postcss": "^8.5.28",
+    "@types/nodemailer": "^8.0.2",
     "prisma": "^7.10.0",
-    "tailwindcss": "^4.3.3",
     "typescript": "7.0.2"
   }
 }
