@@ -39,7 +39,7 @@ export function ServiceSubscriptionCard({ service, onStatusChange }: { service: 
                     <p className="text-sm text-gray-500">{service.description}</p>
                 </div>
                 {service.isSubscribed && (
-                    <button onClick={() => sendRequest("DELETE")} disabled={loading} className="px-3 py-1 bg-red-500/20 text-red-400 rounded-md text-sm">
+                    <button onClick={() => sendRequest("DELETE")} disabled={loading} className="px-3 py-1 bg-red-500/20 text-red-400 rounded-md text-sm transition-all duration-200 hover:bg-red-500/30 hover:scale-105 active:scale-95">
                         Unsubscribe
                     </button>
                 )}
@@ -49,12 +49,17 @@ export function ServiceSubscriptionCard({ service, onStatusChange }: { service: 
                 <form onSubmit={(e) => { e.preventDefault(); sendRequest("POST", { username, password }); }} className="flex flex-col gap-2">
                     <input type="text" placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} className="border p-2 rounded-md bg-transparent" required />
                     <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} className="border p-2 rounded-md bg-transparent" required />
-                    <button type="submit" disabled={loading} className="bg-blue-600 p-2 rounded-md text-white">Subscribe</button>
+                    <button type="submit" disabled={loading} className="bg-blue-600 p-2 rounded-md text-white transition-all duration-200 hover:bg-blue-500 hover:scale-[1.01] active:scale-[0.99]">
+                        Subscribe
+                    </button>
                 </form>
             )}
 
             {!service.isSubscribed && service.authType === "OAUTH" && (
-                <button onClick={() => window.location.href = `${API_URL}/api/services/${service.id}/oauth/start`} className="bg-purple-600 p-2 rounded-md text-white w-full">
+                <button 
+                    onClick={() => window.location.href = `${API_URL}/api/services/${service.id}/oauth/start`} 
+                    className="bg-purple-600 p-2 rounded-md text-white w-full transition-all duration-200 hover:bg-purple-500 hover:scale-[1.01] active:scale-[0.99]"
+                >
                     Connect with {service.name}
                 </button>
             )}
