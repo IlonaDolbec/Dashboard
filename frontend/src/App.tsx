@@ -6,6 +6,7 @@ import RegisterPage from "./pages/RegisterPage";
 import CheckEmailPage from "./pages/CheckEmailPage";
 import DashboardPage from "./pages/DashboardPage";
 import AdminPage from "./pages/AdminPage";
+import ProfilePage from "./pages/ProfilePage"
 
 function App() {
     return (
@@ -17,6 +18,7 @@ function App() {
 
             <Route element={<ProtectedRoute />}>
                 <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/profile" element={<ProfilePage/>}/>
             </Route>
 
             <Route element={<ProtectedRoute adminOnly />}>
