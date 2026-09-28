@@ -1,9 +1,12 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useSession } from "../lib/auth-client";
 import { SignOutButton } from "../components/SignOutButton";
+import { AddWidgetFlow } from "../components/AddWidgetFlow";
 
 export default function DashboardPage() {
     const { data: session } = useSession();
+    const [isAddingWidget, setIsAddingWidget] = useState(false);
 
     if (!session) {
         return null;
@@ -17,6 +20,12 @@ export default function DashboardPage() {
                     <p className="text-sm text-slate-400">Welcome back, {session.user.name}.</p>
                 </div>
                 <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => setIsAddingWidget(true)}
+                        className="rounded-md border border-[var(--border)] px-3 py-1.5 text-sm text-slate-300 transition hover:bg-[var(--surface)]"
+                    >
+                        + Add widget
+                    </button>
                     {session.user.role === "ADMIN" && (
                         <Link
                             to="/admin"
@@ -38,6 +47,17 @@ export default function DashboardPage() {
             <div className="rounded-lg border border-dashed border-[var(--border)] p-10 text-center text-sm text-slate-500">
                 No widgets yet. Subscribe to a service to get started.
             </div>
+
+            {isAddingWidget && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+                    <div className="w-full max-w-md rounded-lg border border-[var(--border)] bg-[var(--surface)] p-6">
+                        <AddWidgetFlow
+                            onClose={() => setIsAddingWidget(false)}
+                            onAdded={() => setIsAddingWidget(false)}
+                        />
+                    </div>
+                </div>
+            )}
         </main>
     );
 }
