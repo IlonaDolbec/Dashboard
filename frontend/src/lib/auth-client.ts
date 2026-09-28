@@ -1,8 +1,10 @@
 import { createAuthClient } from "better-auth/react";
 import { adminClient } from "better-auth/client/plugins";
 
+export const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
+
 export const authClient = createAuthClient({
-    baseURL: import.meta.env.VITE_API_URL ?? "http://localhost:8080",
+    baseURL: API_URL,
     fetchOptions: {
         credentials: "include",
     },
