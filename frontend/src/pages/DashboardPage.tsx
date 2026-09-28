@@ -25,6 +25,12 @@ export default function DashboardPage() {
                             Admin
                         </Link>
                     )}
+                    <Link
+                        to="/profile"
+                        className="rounded-md border border-[var(--border)] px-3 py-1.5 text-sm text-slate-300 transition hover:bg-[var(--surface)]"
+                    >
+                        Profile
+                    </Link>
                     <SignOutButton />
                 </div>
             </header>

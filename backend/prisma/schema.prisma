@@ -17,6 +17,12 @@ enum Role {
   USER
 }
 
+enum AuthType {
+  NONE
+  CREDENTIALS
+  OAUTH
+}
+
 model User {
   id            String    @id
   name          String
@@ -93,7 +99,7 @@ model Service {
   key          String   @unique
   name         String
   description  String?
-  requiresAuth Boolean  @default(true)
+  authType      AuthType @default(NONE)
 
   widgetTypes   WidgetType[]
   subscriptions Subscription[]
@@ -131,6 +137,11 @@ model Subscription {
   service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 
   accountId String?
+
+  username     String?
+  password     String?
+  accessToken  String?
+
   @@unique([userId, serviceId])
 }
 
