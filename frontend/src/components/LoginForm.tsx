@@ -85,12 +85,22 @@ export function LoginForm() {
                 {pending ? "Logging in..." : "Log in"}
             </button>
             <button
+                type="button"
                 className="mt-2 rounded-md bg-[var(--accent)] px-4 py-2 text-sm font-medium text-white transition hover:bg-[var(--accent-hover)] disabled:opacity-35"
                 onClick={() => authClient.signIn.social({
                     provider: "google",
                     callbackURL: `${window.location.origin}/dashboard`,
                 })}>
                 Continue with Google
+            </button>
+            <button
+                type="button"
+                className="mt-2 rounded-md bg-[var(--accent)] px-4 py-2 text-sm font-medium text-white transition hover:bg-[var(--accent-hover)] disabled:opacity-35"
+                onClick={() => authClient.signIn.social({
+                    provider: "github",
+                    callbackURL: `${window.location.origin}/dashboard`,
+                })}>
+                Continue with GitHub
             </button>
         </form>
     );

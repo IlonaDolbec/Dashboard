@@ -101,6 +101,12 @@ model Service {
   description  String?
   authType      AuthType @default(NONE)
 
+  oauthAuthorizeUrl  String?
+  oauthTokenUrl      String?
+  oauthClientId      String?
+  oauthClientSecret  String?
+  oauthScope         String?
+
   widgetTypes   WidgetType[]
   subscriptions Subscription[]
 
@@ -141,6 +147,8 @@ model Subscription {
   username     String?
   password     String?
   accessToken  String?
+  refreshToken String?
+  accessTokenExpiresAt DateTime?
 
   @@unique([userId, serviceId])
 }
