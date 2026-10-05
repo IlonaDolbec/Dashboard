@@ -1,6 +1,11 @@
 import type { WidgetInstance } from "../lib/widgets";
 
-export function WidgetCard({ instance }: { instance: WidgetInstance }) {
+interface WidgetCardProps {
+  instance: WidgetInstance;
+  onDeleteRequest: (instance: WidgetInstance) => void;
+}
+
+export function WidgetCard({ instance, onDeleteRequest }: WidgetCardProps) {
   const { widgetType, config, refreshRateSeconds } = instance;
 
   return (
@@ -8,9 +13,18 @@ export function WidgetCard({ instance }: { instance: WidgetInstance }) {
       aria-label={widgetType.name}
       className="flex h-full flex-col gap-3 overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4"
     >
-      <header>
-        <h2 className="text-sm font-semibold text-slate-100">{widgetType.name}</h2>
-        <p className="text-xs text-slate-500">{widgetType.service.name}</p>
+      <header className="flex items-start justify-between gap-2">
+        <div>
+          <h2 className="text-sm font-semibold text-slate-100">{widgetType.name}</h2>
+          <p className="text-xs text-slate-500">{widgetType.service.name}</p>
+        </div>
+        <button
+          onClick={() => onDeleteRequest(instance)}
+          aria-label={`Delete ${widgetType.name}`}
+          className="text-slate-500 hover:text-[var(--danger)]"
+        >
+          ✕
+        </button>
       </header>
 
       <dl className="flex-1 space-y-1 overflow-auto text-sm">
