@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
         data: {
             userId: session.user.id,
             widgetTypeId,
-            config,
+            config: config ?? {},
             refreshRateSeconds,
             positionX: positionX ?? 0,
             positionY: positionY ?? 0,
@@ -64,4 +64,26 @@ export async function POST(req: NextRequest) {
         },
     });
     return NextResponse.json(instance, { status: 201})
+}
+
+export async function GET(req: NextRequest) {
+    const session = await auth.api.getSession({ headers: req.headers });
+    if (!session) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const instances = await prisma.widgetInstance.findMany({
+        where: { userId: session.user.id },
+        orderBy: [{ positionY: "asc" }, { positionX: "asc" }],
+        include: {
+            widgetType: {
+                select: {
+                    key: true,
+                    name: true,
+                    service: { select:{ name: true }},
+                },
+            },
+        },
+    });
+    return NextResponse.json(instances);
 }
