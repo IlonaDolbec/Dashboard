@@ -74,7 +74,7 @@ export async function GET(req: NextRequest) {
 
     const instances = await prisma.widgetInstance.findMany({
         where: { userId: session.user.id },
-        orderBy: [{ positionY: "asc" }, { positionX: "asc" }],
+        orderBy: [{ positionY: "asc" }, { positionX: "asc" }, { createdAt: "asc" }],
         include: {
             widgetType: {
                 select: {
