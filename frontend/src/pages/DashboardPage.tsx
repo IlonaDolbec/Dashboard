@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { API_URL, useSession } from "../lib/auth-client";
 import { SignOutButton } from "../components/SignOutButton";
 import { AddWidgetFlow } from "../components/AddWidgetFlow";
+import { ConfirmDialog } from "../components/ConfirmDialog";
 import { WidgetGrid } from "../components/WidgetGrid";
 import type { WidgetInstance } from "../lib/widgets";
 
@@ -12,6 +13,8 @@ export default function DashboardPage() {
     const [instances, setInstances] = useState<WidgetInstance[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [pendingDelete, setPendingDelete] = useState<WidgetInstance | null>(null);
+    const [deleteFailed, setDeleteFailed] = useState(false);
 
     const loadInstances = useCallback(async() => {
         try {
@@ -31,6 +34,24 @@ export default function DashboardPage() {
     useEffect(() => {
         loadInstances();
     }, [loadInstances]);
+
+    function askDelete(instance: WidgetInstance | null) {
+        setDeleteFailed(false);
+        setPendingDelete(instance);
+    }
+
+    async function confirmDelete() {
+        const res = await fetch(`${API_URL}/api/widgets/${pendingDelete!.id}`, {
+            method: "DELETE",
+            credentials: "include",
+        }).catch(() => null);
+
+        if (!res?.ok) {
+            return setDeleteFailed(true);
+        }
+        setInstances((prev) => prev.filter((i) => i.id !== pendingDelete!.id));
+        setPendingDelete(null);
+    }
 
     if (!session) {
         return null;
@@ -87,7 +108,7 @@ export default function DashboardPage() {
                     </button>
                 </div>
             ) : (
-                <WidgetGrid instances={instances}/>
+                <WidgetGrid instances={instances} onDeleteRequest={askDelete} />
             )}
 
             {isAddingWidget && (
@@ -99,6 +120,14 @@ export default function DashboardPage() {
                         />
                     </div>
                 </div>
+            )}
+            {pendingDelete && (
+                <ConfirmDialog
+                    message={`Delete "${pendingDelete.widgetType.name}" ? This cannot be undone.`}
+                    error={deleteFailed ? "Failed to delete the widget. Please try again." : null}
+                    onConfirm={confirmDelete}
+                    onCancel={() => askDelete(null)}
+                />
             )}
         </main>
     );

@@ -1,7 +1,12 @@
 import { WidgetCard } from "./WidgetCard";
 import type { WidgetInstance } from "../lib/widgets";
 
-export function WidgetGrid({ instances }: { instances: WidgetInstance[] }) {
+interface WidgetGridProps {
+  instances: WidgetInstance[];
+  onDeleteRequest: (instance: WidgetInstance) => void;
+}
+
+export function WidgetGrid({ instances, onDeleteRequest }: WidgetGridProps) {
   return (
     <section
       aria-label="Your widgets"
@@ -9,7 +14,7 @@ export function WidgetGrid({ instances }: { instances: WidgetInstance[] }) {
     >
       {instances.map((instance) => (
         <div key={instance.id} style={{ minHeight: `${instance.height * 180}px` }}>
-          <WidgetCard instance={instance}/>
+          <WidgetCard instance={instance} onDeleteRequest={onDeleteRequest}/>
         </div>
       ))}
     </section>
