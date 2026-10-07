@@ -35,6 +35,23 @@ export default function DashboardPage() {
         loadInstances();
     }, [loadInstances]);
 
+    async function handleReorder(next: WidgetInstance[]) {
+        const normalized = next.map((w, i) => ({ ...w, positionX: i, positionY: 0 }));
+        setInstances(normalized);
+
+        const res = await fetch(`${API_URL}/api/widgets/move`, {
+            method: "PUT",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ids: normalized.map((w) => w.id)}),
+        }).catch(() => null);
+
+        if (!res?.ok) {
+            setError("Failed to save the new widget order.");
+            loadInstances();
+        }
+    }
+
     function askDelete(instance: WidgetInstance | null) {
         setDeleteFailed(false);
         setPendingDelete(instance);
@@ -108,7 +125,7 @@ export default function DashboardPage() {
                     </button>
                 </div>
             ) : (
-                <WidgetGrid instances={instances} onDeleteRequest={askDelete} />
+                <WidgetGrid instances={instances} onDeleteRequest={askDelete} onReorder={handleReorder}/>
             )}
 
             {isAddingWidget && (
