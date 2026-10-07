@@ -39,11 +39,11 @@ export default function DashboardPage() {
         const normalized = next.map((w, i) => ({ ...w, positionX: i, positionY: 0 }));
         setInstances(normalized);
 
-        const res = await fetch(`${API_URL}/api/widgets/reorder`, {
+        const res = await fetch(`${API_URL}/api/widgets/move`, {
             method: "PUT",
             credentials: "include",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({positions: normalized.map((w) => ({ id: w.id, positionX: w.positionX, positionY: w.positionY })),}),
+            body: JSON.stringify({ ids: normalized.map((w) => w.id)}),
         }).catch(() => null);
 
         if (!res?.ok) {
