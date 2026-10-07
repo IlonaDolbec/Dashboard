@@ -34,7 +34,41 @@ const services: ServiceSeed[] = [
         oauthClientSecret: process.env.GITHUB_CLIENT_SECRET,
         oauthScope: "repo read:user",
     },
+    {
+        id: "weather",
+        key: "weather",
+        name: "Weather",
+        description: "Current conditions and forecasts for any city. No account required.",
+        authType: "NONE",
+    },
 ];
+
+type WidgetTypeSeed = {
+    key: string;
+    name: string;
+    description: string;
+    paramsSchema: { name: string; type: "integer" | "string"; label?: string }[];
+};
+
+const widgetTypesByService: Record<string, WidgetTypeSeed[]> = {
+    weather: [
+        {
+            key: "city_temperature",
+            name: "City temperature",
+            description: "Current sky overview, temperature and precipitation for a city.",
+            paramsSchema: [{ name: "city", type: "string", label: "City" }],
+        },
+        {
+            key: "forecast_overview",
+            name: "Forecast overview",
+            description: "Multi-day forecast for a city.",
+            paramsSchema: [
+                { name: "city", type: "string", label: "City" },
+                { name: "days", type: "integer", label: "Number of days (1-16)" },
+            ],
+        },
+    ],
+};
 
 async function main() {
     for (const service of services) {
@@ -52,6 +86,15 @@ async function main() {
             update: data,
             create: { id, ...data },
         });
+
+        for (const widgetType of widgetTypesByService[service.key] ?? []) {
+            const { key, ...typeData } = widgetType;
+            await prisma.widgetType.upsert({
+                where: { serviceId_key: { serviceId: id, key } },
+                update: typeData,
+                create: { key, serviceId: id, ...typeData },
+            });
+        }
 
         console.log(`Seeded service "${service.key}" (${id})`);
     }
