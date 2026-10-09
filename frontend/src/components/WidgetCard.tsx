@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import { API_URL } from "../lib/auth-client";
+import { useWidgetData } from "../lib/useWidgetData";
 import type { WidgetInstance } from "../lib/widgets";
 
 interface CurrentWeather {
@@ -47,35 +46,16 @@ function WeatherBody({ widgetKey, data }: { widgetKey: string; data: unknown }) 
   );
 }
 
-function useWidgetData(instanceId: string) {
-  const [data, setData] = useState<unknown>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch(`${API_URL}/api/widgets/${instanceId}/data`, { credentials: "include" })
-      .then(async (res) => {
-        const body = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(body.error ?? "Failed to load data.");
-        return body;
-      })
-      .then((body) => !cancelled && setData(body))
-      .catch((err: Error) => !cancelled && setError(err.message));
-    return () => { cancelled = true; };
-  }, [instanceId]);
-
-  return { data, error };
-}
-
 interface WidgetCardProps {
   instance: WidgetInstance;
   onDeleteRequest: (instance: WidgetInstance) => void;
+  onEditRequest: (instance: WidgetInstance) => void;
 }
 
-export function WidgetCard({ instance, onDeleteRequest }: WidgetCardProps) {
+export function WidgetCard({ instance, onDeleteRequest, onEditRequest }: WidgetCardProps) {
   const { widgetType, config, refreshRateSeconds } = instance;
   const isWeather = widgetType.service.name === "Weather";
-  const { data, error } = useWidgetData(instance.id);
+  const { data, error } = useWidgetData(instance);
 
   return (
     <article
@@ -87,23 +67,31 @@ export function WidgetCard({ instance, onDeleteRequest }: WidgetCardProps) {
           <h2 className="text-sm font-semibold text-slate-100">{widgetType.name}</h2>
           <p className="text-xs text-slate-500">{widgetType.service.name}</p>
         </div>
-        <button
-          onClick={() => onDeleteRequest(instance)}
-          aria-label={`Delete ${widgetType.name}`}
-          className="text-slate-500 hover:text-[var(--danger)]"
-        >
-          ✕
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => onEditRequest(instance)}
+            aria-label={`Edit ${widgetType.name}`}
+            className="text-slate-500 hover:text-slate-200"
+          >
+            ✎
+          </button>
+          <button
+            onClick={() => onDeleteRequest(instance)}
+            aria-label={`Delete ${widgetType.name}`}
+            className="text-slate-500 hover:text-[var(--danger)]"
+          >
+            ✕
+          </button>
+        </div>
       </header>
 
       {isWeather ? (
         <div className="flex-1 overflow-auto text-sm">
-          {error ? (
-            <p role="alert" className="text-[var(--danger)]">{error}</p>
-          ) : data ? (
+          {error && <p role="alert" className="mb-2 text-xs text-[var(--danger)]">{error}</p>}
+          {data ? (
             <WeatherBody widgetKey={widgetType.key} data={data} />
           ) : (
-            <p className="text-slate-500">Loading…</p>
+            !error && <p className="text-slate-500">Loading…</p>
           )}
         </div>
       ) : (

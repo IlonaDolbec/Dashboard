@@ -6,9 +6,10 @@ interface WidgetGridProps {
   instances: WidgetInstance[];
   onDeleteRequest: (instance: WidgetInstance) => void;
   onReorder: (instances: WidgetInstance[]) => void;
+  onEditRequest: (instance: WidgetInstance) => void;
 }
 
-export function WidgetGrid({ instances, onDeleteRequest, onReorder }: WidgetGridProps) {
+export function WidgetGrid({ instances, onDeleteRequest, onReorder, onEditRequest}: WidgetGridProps) {
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
 
@@ -48,7 +49,7 @@ export function WidgetGrid({ instances, onDeleteRequest, onReorder }: WidgetGrid
             style={{ minHeight: `${instance.height * 180}px`}}
             className={`cursor-grab rounded-lg active:cursor-grabbing ${isDragged ? "opacity-40" : ""} ${isTarget ? "ring-2 ring-[var(--accent)]" : ""}`}
           >
-            <WidgetCard instance={instance} onDeleteRequest={onDeleteRequest}/>
+            <WidgetCard instance={instance} onDeleteRequest={onDeleteRequest} onEditRequest={onEditRequest}/>
           </div>
         );
       })}
