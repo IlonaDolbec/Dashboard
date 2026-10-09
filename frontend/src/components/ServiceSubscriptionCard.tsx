@@ -80,7 +80,7 @@ export function ServiceSubscriptionCard({ service, onStatusChange }: { service: 
                 </form>
             )}
 
-            {!service.isSubscribed && service.authType === "OAUTH" && (
+            {!service.isSubscribed && (service.authType === "OAUTH" || service.authType === "OPENID") && (
                 <button onClick={() => {window.location.href = `${API_URL}/api/services/${service.id}/oauth/start`;}}
                     className="mt-4 bg-purple-600 p-2 rounded-md text-white w-full transition-colors hover:bg-purple-500"
                 >

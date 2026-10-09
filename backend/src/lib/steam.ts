@@ -14,7 +14,7 @@ export interface CurrentlyPlaying {
     name?: string;
     coverUrl?: string;
     startedAt?: string;
-    elapsedSeconds?: number;
+    elapsedMinutes?: number;
 }
 
 export interface MostPlayedGames {
@@ -113,7 +113,7 @@ export async function getCurrentlyPlaying(steamId: string, displayMode: string, 
         name: player.gameextrainfo ?? "Unknown game",
         coverUrl: coverUrl(appId),
         startedAt,
-        elapsedSeconds: Math.floor((Date.now() - new Date(startedAt).getTime()) / 1000),
+        elapsedMinutes: Math.floor((Date.now() - new Date(startedAt).getTime()) / 60000),
     };
 }
 
