@@ -1,4 +1,4 @@
-import { useWidgetData } from "../lib/useWidgetData";
+import { useWidgetData } from "../lib/useWidgetRefresh";
 import type { WidgetInstance } from "../lib/widgets";
 
 interface CurrentWeather {
