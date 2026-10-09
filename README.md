@@ -2,6 +2,43 @@
 
 A web application that lets each user build their own customizable dashboard: add widgets from different services (weather, GitHub, Steam, etc...), configure each widget individually, and have the data refresh automatically at a set interval.
 
+## Overview
+
+Dashboard is a personal control panel. Instead of opening many websites to check the weather, your repositories or your feeds, you build one page that shows everything you care about, and it stays up to date by itself.
+
+### How it works
+
+1. **Create an account** and sign in.
+2. **Pick a service** (for example Weather). Some services need no external account others ask you to link yours.
+3. **Add a widget**: each service offers several widget types (ex: "City temperature"). Choose one, configure it (ex: the city), and set how often it refreshes.
+4. **Arrange your dashboard**: drag and drop widgets to reorder them, edit their settings, or delete them.
+
+### Key concepts
+
+| Term | Meaning |
+|---|---|
+| Service | A source of information (Weather, GitHub, ...) |
+| Widget type | A kind of card a service provides (ex: City temperature) |
+| Widget instance | A configured copy of a widget type on your dashboard |
+| Refresh rate | How often an instance fetches new data, chosen per widget |
+
+Two instances of the same widget type can show different data at the same time, for example the weather in Paris and in Tokyo. Each one has its own settings and its own refresh timer, so one never affects the other.
+
+### Main use cases
+
+- Create an account and sign in.
+- Add a widget: choose a type, configure it, set its refresh rate.
+- Reconfigure a widget; the change is applied immediately.
+- Move (drag and drop) or delete a widget.
+- Leave the page open: every widget refreshes on its own schedule.
+
+### Key features
+
+- Authentication, with a separate dashboard for each user
+- Services and widgets with configurable parameters
+- Drag and drop to rearrange widgets
+- Available widgets: see [Available services & widgets](#available-services--widgets)
+
 ## Tech stack
 
 | Layer | Choice |
@@ -13,7 +50,7 @@ A web application that lets each user build their own customizable dashboard: ad
 | ORM | Prisma 7 |
 | Authentication | Better Auth (credentials + OAuth 2.0 / OIDC) |
 
-The full rationale behind each choice is documented in [`docs/technical_stack.md`](docs/technical_stack.md).
+The comparison of at least 3 options per layer (frontend, backend, database) and the justification of each choice are in [`docs/technical_stack.md`](docs/technical_stack.md).
 
 ## Getting started
 
@@ -56,7 +93,7 @@ All variables are documented in `.env.example`. Summary:
 | `SERVER_PORT` | Host-side port exposed for the application |
 | `DATABASE_URL` | Prisma connection string |
 | `BETTER_AUTH_SECRET` | Secret used by Better Auth to sign sessions and hash passwords. Generate with `openssl rand -base64 32` |
-| `BETTER_AUTH_URL` | Base URL of the application (e.g. `http://localhost:8080`) |
+| `BETTER_AUTH_URL` | Base URL of the application (ex: `http://localhost:8080`) |
 
 > ⚠️ Never commit your real `.env` file, only `.env.example` should be version-controlled.
 
@@ -82,12 +119,13 @@ curl http://localhost:<SERVER_PORT>/about.json
 
 | Service | Widget | Description | Parameters |
 |---|---|---|---|
-| _to be filled in_ | _to be filled in_ | _to be filled in_ | _to be filled in_ |
+| Weather | `city_temperature` | Current temperature, sky and precipitation for a city | `city` (string) |
+| Weather | `forecast_overview` | Daily forecast overview for a city | `city` (string), `days` (integer) |
 
 
 ## Documentation
 
-- [`docs/technical_stack.md`](docs/technical_stack.md), why each technology was chosen, and the simplified architecture diagram
+- [`docs/technical_stack.md`](docs/technical_stack.md), technology choices: comparison of 3+ options per layer, justification, and the simplified architecture diagram
 - [`docs/DATABASE.md`](docs/DATABASE.md), Prisma and Better Auth commands (migrations, client generation, Prisma Studio, etc.)
 - [`docs/DOCKER.md`](docs/DOCKER.md), Docker Compose commands (build, logs, debugging)
 - [`docs/pull_request.md`](docs/pull_request.md), required pull request template
