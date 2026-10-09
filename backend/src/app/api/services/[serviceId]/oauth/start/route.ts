@@ -2,6 +2,7 @@ import { NextResponse, NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { buildAuthorizeUrl, generateState } from "@/lib/oauth";
+import { buildSteamLoginUrl } from "@/lib/steam";
 
 const STATE_COOKIE = "oauth_state";
 
@@ -14,14 +15,16 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ serv
     const service = await prisma.service.findUnique({ where: { id: serviceId } });
     if (!service) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    if (service.authType !== "OAUTH") {
+    if (service.authType !== "OAUTH" && service.authType !== "OPENID") {
         return NextResponse.json({ error: "This service does not support OAuth" }, { status: 400 });
     }
 
     const state = generateState();
     let authorizeUrl: string;
     try {
-        authorizeUrl = buildAuthorizeUrl(service, state);
+        authorizeUrl = service.authType === "OPENID"
+            ? buildSteamLoginUrl(serviceId, state)
+            : buildAuthorizeUrl(service, state);
     } catch {
         return NextResponse.json({ error: "This service is not configured for OAuth" }, { status: 500 });
     }
