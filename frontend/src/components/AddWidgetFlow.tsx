@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { API_URL } from "../lib/auth-client";
+import type { WidgetInstance } from "../lib/widgets";
 
 interface ParamDef {
   name: string;
@@ -14,11 +15,31 @@ interface WidgetType {
   service: { name: string };
 }
 
-export function AddWidgetFlow({ onClose, onAdded }: { onClose: () => void; onAdded: () => void }) {
+interface AddWidgetFlowProps {
+  onClose: () => void;
+  onAdded: () => void;
+  instance?: WidgetInstance;
+}
+
+function configToStrings(config: Record<string, unknown>) {
+  const result: Record<string, string> = {};
+  const keys = Object.keys(config);
+
+  for (let i = 0; i < keys.length; i++) {
+    result[keys[i]] = String(config[keys[i]]);
+  }
+  return result;
+}
+
+export function AddWidgetFlow({ onClose, onAdded, instance }: AddWidgetFlowProps) {
+  const isEditing = instance !== undefined;
+
   const [widgetTypes, setWidgetTypes] = useState<WidgetType[]>([]);
-  const [selectedId, setSelectedId] = useState("");
-  const [config, setConfig] = useState<Record<string, string>>({});
-  const [refreshRate, setRefreshRate] = useState("");
+  const [selectedId, setSelectedId] = useState(instance?.widgetTypeId ?? "");
+  const [config, setConfig] = useState<Record<string, string>>(
+    instance ? configToStrings(instance.config) : {},
+  );
+  const [refreshRate, setRefreshRate] = useState(instance ? String(instance.refreshRateSeconds) : "");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -55,22 +76,26 @@ export function AddWidgetFlow({ onClose, onAdded }: { onClose: () => void; onAdd
       typedConfig[param.name] = param.type === "integer" ? Number(config[param.name]) : config[param.name];
     }
 
+    const url = isEditing ? `${API_URL}/api/widgets/${instance.id}` : `${API_URL}/api/widgets`;
+    const method = isEditing ? "PATCH" : "POST";
+    const body = {
+      widgetTypeId: selectedType.id,
+      config: typedConfig,
+      refreshRateSeconds: Number(refreshRate),
+    };
+
     setSubmitting(true);
-    const res = await fetch(`${API_URL}/api/widgets`, {
-      method: "POST",
+    const res = await fetch(url, {
+      method,
       credentials: "include",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        widgetTypeId: selectedType.id,
-        config: typedConfig,
-        refreshRateSeconds: Number(refreshRate),
-      }),
-    });
+      body: JSON.stringify(body),
+    }).catch(() => null);
     setSubmitting(false);
 
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      return setError(body.error ?? "Failed to add widget.");
+    if (!res?.ok) {
+      const errorBody = await res?.json().catch(() => ({}));
+      return setError(errorBody?.error ?? "Failed to save widget.");
     }
     onAdded();
     onClose();
@@ -79,18 +104,20 @@ export function AddWidgetFlow({ onClose, onAdded }: { onClose: () => void; onAdd
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-semibold text-slate-100">Add a widget</h2>
-        <button onClick={onClose} className="text-slate-400 hover:text-slate-200">✕</button>
+        <h2 className="text-base font-semibold text-slate-100">{isEditing ? "Edit widget" : "Add a widget"}</h2>
+        <button onClick={onClose} aria-label="Close" className="text-slate-400 hover:text-slate-200">✕</button>
       </div>
 
       {error && <p role="alert" className="text-sm text-[var(--danger)]">{error}</p>}
 
       <div className="flex flex-col gap-1">
-        <label className="text-sm text-slate-300">Widget type</label>
+        <label htmlFor="widget-type" className="text-sm text-slate-300">Widget type</label>
         <select
+          id="widget-type"
           value={selectedId}
+          disabled={isEditing}
           onChange={(e) => { setSelectedId(e.target.value); setConfig({}); }}
-          className="rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-slate-200"
+          className="rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-slate-200 disabled:opacity-60"
         >
           <option value="">Select a widget…</option>
           {widgetTypes.map((t) => (
@@ -101,8 +128,9 @@ export function AddWidgetFlow({ onClose, onAdded }: { onClose: () => void; onAdd
 
       {selectedType?.paramsSchema.map((param) => (
         <div key={param.name} className="flex flex-col gap-1">
-          <label className="text-sm text-slate-300">{param.label ?? param.name}</label>
+          <label htmlFor={`param-${param.name}`} className="text-sm text-slate-300">{param.label ?? param.name}</label>
           <input
+            id={`param-${param.name}`}
             type={param.type === "integer" ? "number" : "text"}
             value={config[param.name] ?? ""}
             onChange={(e) => setConfig((prev) => ({ ...prev, [param.name]: e.target.value }))}
@@ -113,8 +141,9 @@ export function AddWidgetFlow({ onClose, onAdded }: { onClose: () => void; onAdd
 
       {selectedType && (
         <div className="flex flex-col gap-1">
-          <label className="text-sm text-slate-300">Refresh every (seconds)</label>
+          <label htmlFor="refresh-rate" className="text-sm text-slate-300">Refresh every (seconds)</label>
           <input
+            id="refresh-rate"
             type="number"
             min={1}
             value={refreshRate}
@@ -132,7 +161,7 @@ export function AddWidgetFlow({ onClose, onAdded }: { onClose: () => void; onAdd
           disabled={submitting || !selectedType}
           className="rounded-md bg-[var(--accent)] px-4 py-1.5 text-sm font-medium text-white hover:bg-[var(--accent-hover)] disabled:opacity-50"
         >
-          {submitting ? "Adding…" : "Add widget"}
+          {submitting ? (isEditing ? "Saving…" : "Adding…") : isEditing ? "Save changes" : "Add widget"}
         </button>
       </div>
     </div>
