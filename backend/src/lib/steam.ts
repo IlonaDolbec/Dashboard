@@ -1,4 +1,4 @@
-import { MAX_GAME_COUNT, STEAM_API_URL, STEAM_OPENID_URL, STEAM_REQUEST_TIMEOUT_MS, STEAM_CDN_URL, STEAM_OPENID_NS } from "./constants";
+import { MAX_GAME_COUNT, STEAM_API_URL, STEAM_STORE_API_URL, STEAM_OPENID_URL, STEAM_REQUEST_TIMEOUT_MS, STEAM_CDN_URL, STEAM_OPENID_NS } from "./constants";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:8080";
 
@@ -33,9 +33,11 @@ interface OwnedGame {
     playtime_forever: number;
 }
 
-function coverUrl(appId: number) {
+function defaultCoverUrl(appId: number) {
     return `${STEAM_CDN_URL}/${appId}/header.jpg`;
 }
+
+const coverCache = new Map<number, string>();
 
 async function request(url: string | URL, init?: RequestInit) {
     const res = await fetch(url, { ...init, signal: AbortSignal.timeout(STEAM_REQUEST_TIMEOUT_MS), cache: "no-store" });
@@ -44,6 +46,23 @@ async function request(url: string | URL, init?: RequestInit) {
         throw new Error();
     }
     return res;
+}
+
+async function resolveCover(appId: number): Promise<string> {
+    const cached = coverCache.get(appId);
+    if (cached) return cached;
+
+    try {
+        const res = await request(`${STEAM_STORE_API_URL}?appids=${appId}&filters=basic`);
+        const json = await res.json();
+        const url: string | undefined = json?.[appId]?.data?.header_image;
+        if (url) {
+            coverCache.set(appId, url);
+            return url;
+        }
+    } catch {
+    }
+    return defaultCoverUrl(appId);
 }
 
 export function getReturnUrl(serviceId: string, state: string) {
@@ -111,7 +130,7 @@ export async function getCurrentlyPlaying(steamId: string, displayMode: string, 
         playing: true,
         appId,
         name: player.gameextrainfo ?? "Unknown game",
-        coverUrl: coverUrl(appId),
+        coverUrl: await resolveCover(appId),
         startedAt,
         elapsedMinutes: Math.floor((Date.now() - new Date(startedAt).getTime()) / 60000),
     };
@@ -139,9 +158,17 @@ export async function getMostPlayedGames(steamId: string, order: string, gameCou
         .map((game) => ({
             appId: game.appid,
             name: game.name,
-            coverUrl: coverUrl(game.appid),
+            coverUrl: defaultCoverUrl(game.appid),
             minutes: game.playtime_forever,
         }))
-        .sort((a, b) => (order === "most" ? b.minutes - a.minutes : a.minutes - b.minutes));
-    return { order, games: games.slice(0, gameCount) };
+        .sort((a, b) => (order === "most" ? b.minutes - a.minutes : a.minutes - b.minutes))
+        .slice(0, gameCount);
+
+    await Promise.all(
+        games.map(async (game) => {
+            game.coverUrl = await resolveCover(game.appId);
+        }),
+    );
+
+    return { order, games };
 }
