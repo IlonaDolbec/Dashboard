@@ -21,6 +21,7 @@ enum AuthType {
   NONE
   CREDENTIALS
   OAUTH
+  OPENID
 }
 
 model User {

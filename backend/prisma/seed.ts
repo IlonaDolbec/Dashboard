@@ -13,7 +13,7 @@ type ServiceSeed = {
     key: string;
     name: string;
     description?: string;
-    authType: "NONE" | "CREDENTIALS" | "OAUTH";
+    authType: "NONE" | "CREDENTIALS" | "OAUTH" | "OPENID";
     oauthAuthorizeUrl?: string;
     oauthTokenUrl?: string;
     oauthClientId?: string;
@@ -41,6 +41,13 @@ const services: ServiceSeed[] = [
         description: "Current conditions and forecasts for any city. No account required.",
         authType: "NONE",
     },
+    {
+        id: "steam",
+        key: "steam",
+        name: "Steam",
+        description: "Link your Steam account to see what you are playing and your most played games.",
+        authType: "OPENID",
+    },
 ];
 
 type WidgetTypeSeed = {
@@ -65,6 +72,25 @@ const widgetTypesByService: Record<string, WidgetTypeSeed[]> = {
             paramsSchema: [
                 { name: "city", type: "string", label: "City" },
                 { name: "days", type: "integer", label: "Number of days (1-16)" },
+            ],
+        },
+    ],
+    steam: [
+        {
+            key: "currently_playing",
+            name: "Currently playing",
+            description: "The game your linked Steam account is playing right now.",
+            paramsSchema: [
+                { name: "display_mode", type: "string", label: "Display mode (compact or detailed)" },
+            ],
+        },
+        {
+            key: "most_played_games",
+            name: "Most played games",
+            description: "Games sorted by total playtime (most or least played).",
+            paramsSchema: [
+                { name: "order", type: "string", label: "Order (most or least played)" },
+                { name: "game_count", type: "integer", label: "Number of games" },
             ],
         },
     ],

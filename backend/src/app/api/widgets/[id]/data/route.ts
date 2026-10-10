@@ -2,6 +2,7 @@ import { NextResponse, NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getCurrentWeather, getForecast, WeatherError } from "@/lib/weather";
+import { getCurrentlyPlaying, getMostPlayedGames, SteamError, CurrentlyPlaying } from "@/lib/steam";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     const session = await auth.api.getSession({ headers: req.headers });
@@ -24,6 +25,28 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
             } else if (instance.widgetType.key === "forecast_overview") {
                 data = await getForecast(String(config.city), Number(config.days));
             }
+        } else if (instance.widgetType.service.key === "steam") {
+            const subscription = await prisma.subscription.findUnique({
+                where: {
+                    userId_serviceId: { userId: session.user.id, serviceId: instance.widgetType.serviceId },
+                },
+            });
+            if (!subscription?.accountId) {
+                return NextResponse.json({ error: "Steam account not linked" }, { status: 409 });
+            }
+            if (instance.widgetType.key === "currently_playing") {
+                data = await getCurrentlyPlaying(
+                    subscription.accountId,
+                    String(config.display_mode),
+                    instance.lastData as CurrentlyPlaying | null,
+                );
+            } else if (instance.widgetType.key === "most_played_games") {
+                data = await getMostPlayedGames(
+                    subscription.accountId,
+                    String(config.order),
+                    Number(config.game_count),
+                );
+            }
         }
         if (data === undefined) {
             return NextResponse.json({ error: "This widget type has no data source" }, { status: 501 });
@@ -35,7 +58,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         });
         return NextResponse.json(data);
     } catch (err) {
-        if (err instanceof WeatherError) {
+        if (err instanceof WeatherError || err instanceof SteamError) {
             return NextResponse.json({ error: err.message }, { status: err.status });
         }
         return NextResponse.json({ error: "Failed to fetch widget data" }, { status: 500 });

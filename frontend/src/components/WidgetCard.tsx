@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import { API_URL } from "../lib/auth-client";
+import { useWidgetData } from "../lib/useWidgetRefresh";
 import type { WidgetInstance } from "../lib/widgets";
 
 interface CurrentWeather {
@@ -15,6 +14,24 @@ interface ForecastData {
   city: string;
   country: string | null;
   days: { date: string; condition: string; icon: string; tempMax: number; tempMin: number }[];
+}
+
+interface CurrentlyPlayingData {
+  playing: boolean;
+  name?: string;
+  coverUrl?: string;
+  elapsedMinutes?: number;
+}
+
+interface MostPlayedData {
+  order: "most" | "least";
+  games: { appId: number; name: string; coverUrl: string;minutes: number }[];
+}
+
+function formatMinutes(totalMinutes: number) {
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return hours > 0 ? `${hours}h ${minutes}min` : `${minutes}min`;
 }
 
 function WeatherBody({ widgetKey, data }: { widgetKey: string; data: unknown }) {
@@ -47,35 +64,68 @@ function WeatherBody({ widgetKey, data }: { widgetKey: string; data: unknown }) 
   );
 }
 
-function useWidgetData(instanceId: string) {
-  const [data, setData] = useState<unknown>(null);
-  const [error, setError] = useState<string | null>(null);
+function SteamBody({ widgetKey, data, config }: { widgetKey: string; data: unknown; config: Record<string, unknown> }) {
+  if (widgetKey === "currently_playing") {
+    const g = data as CurrentlyPlayingData;
+    if (!g.playing) {
+      return <p className="text-slate-400">Not currently playing</p>;
+    }
+    const elapsed = formatMinutes(g.elapsedMinutes ?? 0);
+    if (config.display_mode === "detailed") {
+      return (
+        <div className="flex flex-col gap-2">
+          <img src={g.coverUrl} alt={g.name} className="w-full rounded-md" />
+          <p className="font-semibold text-slate-100">{g.name}</p>
+          <p className="text-xs text-slate-400">Playing for {elapsed}</p>
+        </div>
+      );
+    }
+    return (
+      <div className="flex items-center gap-3">
+        <img src={g.coverUrl} alt="" className="h-12 rounded-md" />
+        <div>
+          <p className="font-semibold text-slate-100">{g.name}</p>
+          <p className="text-xs text-slate-400">{elapsed}</p>
+        </div>
+      </div>
+    );
+  }
 
-  useEffect(() => {
-    let cancelled = false;
-    fetch(`${API_URL}/api/widgets/${instanceId}/data`, { credentials: "include" })
-      .then(async (res) => {
-        const body = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(body.error ?? "Failed to load data.");
-        return body;
-      })
-      .then((body) => !cancelled && setData(body))
-      .catch((err: Error) => !cancelled && setError(err.message));
-    return () => { cancelled = true; };
-  }, [instanceId]);
-
-  return { data, error };
+  const m = data as MostPlayedData;
+  if (m.games.length === 0) {
+    return <p className="text-slate-400">No played games found</p>;
+  }
+  return (
+    <ol className="space-y-2">
+      {m.games.map((game, i) => (
+        <li key={game.appId} className="flex items-center gap-3 text-sm">
+          <span className="w-4 shrink-0 text-slate-500">{i + 1}</span>
+          <img
+            src={game.coverUrl}
+            alt=""
+            loading="lazy"
+            onError={(e) => {e.currentTarget.style.visibility = "hidden"}}
+            className="h-10 w-20 shrink-0 rounded object-cover"
+          />
+          <span className="min-w-0 flex-1 truncate text-slate-200">{game.name}</span>
+          <span className="shrink-0 text-slate-400">{formatMinutes(game.minutes)}</span>
+        </li>
+      ))}
+    </ol>
+  );
 }
 
 interface WidgetCardProps {
   instance: WidgetInstance;
   onDeleteRequest: (instance: WidgetInstance) => void;
+  onEditRequest: (instance: WidgetInstance) => void;
 }
 
-export function WidgetCard({ instance, onDeleteRequest }: WidgetCardProps) {
+export function WidgetCard({ instance, onDeleteRequest, onEditRequest }: WidgetCardProps) {
   const { widgetType, config, refreshRateSeconds } = instance;
   const isWeather = widgetType.service.name === "Weather";
-  const { data, error } = useWidgetData(instance.id);
+  const isSteam = widgetType.service.name === "Steam";
+  const { data, error } = useWidgetData(instance);
 
   return (
     <article
@@ -87,23 +137,35 @@ export function WidgetCard({ instance, onDeleteRequest }: WidgetCardProps) {
           <h2 className="text-sm font-semibold text-slate-100">{widgetType.name}</h2>
           <p className="text-xs text-slate-500">{widgetType.service.name}</p>
         </div>
-        <button
-          onClick={() => onDeleteRequest(instance)}
-          aria-label={`Delete ${widgetType.name}`}
-          className="text-slate-500 hover:text-[var(--danger)]"
-        >
-          ✕
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => onEditRequest(instance)}
+            aria-label={`Edit ${widgetType.name}`}
+            className="text-slate-500 hover:text-slate-200"
+          >
+            ✎
+          </button>
+          <button
+            onClick={() => onDeleteRequest(instance)}
+            aria-label={`Delete ${widgetType.name}`}
+            className="text-slate-500 hover:text-[var(--danger)]"
+          >
+            ✕
+          </button>
+        </div>
       </header>
 
-      {isWeather ? (
+      {isWeather || isSteam ? (
         <div className="flex-1 overflow-auto text-sm">
-          {error ? (
-            <p role="alert" className="text-[var(--danger)]">{error}</p>
-          ) : data ? (
-            <WeatherBody widgetKey={widgetType.key} data={data} />
+          {error && <p role="alert" className="mb-2 text-xs text-[var(--danger)]">{error}</p>}
+          {data ? (
+            isWeather ? (
+              <WeatherBody widgetKey={widgetType.key} data={data} />
+            ) : (
+              <SteamBody widgetKey={widgetType.key} data={data} config={config}/>
+            )
           ) : (
-            <p className="text-slate-500">Loading…</p>
+            !error && <p className="text-slate-500">Loading…</p>
           )}
         </div>
       ) : (

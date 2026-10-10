@@ -15,6 +15,7 @@ export default function DashboardPage() {
     const [error, setError] = useState<string | null>(null);
     const [pendingDelete, setPendingDelete] = useState<WidgetInstance | null>(null);
     const [deleteFailed, setDeleteFailed] = useState(false);
+    const [editing, setEditing] = useState<WidgetInstance | null>(null);
 
     const loadInstances = useCallback(async() => {
         try {
@@ -125,14 +126,24 @@ export default function DashboardPage() {
                     </button>
                 </div>
             ) : (
-                <WidgetGrid instances={instances} onDeleteRequest={askDelete} onReorder={handleReorder}/>
+                <WidgetGrid
+                    instances={instances}
+                    onDeleteRequest={askDelete}
+                    onEditRequest={setEditing}
+                    onReorder={handleReorder}
+                />
             )}
 
-            {isAddingWidget && (
+            {(isAddingWidget || editing) && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
                     <div className="w-full max-w-md rounded-lg border border-[var(--border)] bg-[var(--surface)] p-6">
                         <AddWidgetFlow
-                            onClose={() => setIsAddingWidget(false)}
+                            key={editing?.id ?? "new"}
+                            instance={editing ?? undefined}
+                            onClose={() => {
+                                setIsAddingWidget(false);
+                                setEditing(null);
+                            }}
                             onAdded={loadInstances}
                         />
                     </div>

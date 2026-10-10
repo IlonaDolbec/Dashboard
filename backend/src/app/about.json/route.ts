@@ -6,13 +6,13 @@ export async function GET(request: NextRequest) {
     include: { widgetTypes: true },
   });
 
-  const host = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
-    ?? "unknown";
+  const host = (request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown")
+    .replace("::ffff:", "");
 
   return NextResponse.json({
     client: { host },
     server: {
-      current_time: Math.floor(Date.now() / 1000),
+      current_time: new Date().toLocaleString("fr-FR", { timeZone: "Europe/Paris" }),
       services: services.map((service) => ({
         name: service.key,
         widgets: service.widgetTypes.map((widgetType) => ({
