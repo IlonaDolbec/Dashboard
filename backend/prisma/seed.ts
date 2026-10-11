@@ -65,6 +65,26 @@ type WidgetTypeSeed = {
 };
 
 const widgetTypesByService: Record<string, WidgetTypeSeed[]> = {
+    github: [
+        {
+            key: "recent_commits",
+            name: "Recent commits",
+            description: "Latest commit messages and authors of a repository's default branch.",
+            paramsSchema: [
+                { name: "repository", type: "string", label: "Repository (ex: owner/repo)" },
+                { name: "commit_count", type: "integer", label: "Number of commits (1-50)" },
+            ],
+        },
+        {
+            key: "repo_activity_stats",
+            name: "Repository activity",
+            description: "Commit count and active contributors over a period.",
+            paramsSchema: [
+                { name: "repository", type: "string", label: "Repository (ex: owner/repo)" },
+                { name: "period_days", type: "integer", label: "Period in days (1-365)" },
+            ],
+        },
+    ],
     weather: [
         {
             key: "city_temperature",

@@ -44,6 +44,28 @@ interface CountdownData {
   seconds: number;
 }
 
+interface RecentCommitsData {
+  commits: { sha: string; message: string; author: string; date: string; url: string }[];
+}
+
+interface RepoActivityData {
+  repository: string;
+  periodDays: number;
+  commitCount: number;
+  contributorCount: number;
+  truncated: boolean;
+}
+
+function timeAgo(isoDate: string) {
+  const seconds = Math.max(0, Math.floor((Date.now() - new Date(isoDate).getTime()) / 1000));
+  if (seconds < 60) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}min ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
+}
+
 function formatMinutes(totalMinutes: number) {
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
@@ -133,6 +155,36 @@ function SteamBody({ widgetKey, data, config }: { widgetKey: string; data: unkno
   );
 }
 
+function GithubBody({ widgetKey, data }: { widgetKey: string; data: unknown }) {
+  if (widgetKey === "recent_commits") {
+    const { commits } = data as RecentCommitsData;
+    if (commits.length === 0) return <p className="text-slate-400">No commits found</p>;
+    return (
+      <ul className="space-y-2">
+        {commits.map((c) => (
+          <li key={c.sha} className="text-sm">
+            <a href={c.url} target="_blank" rel="noreferrer" className="block truncate text-slate-200 hover:underline">
+              {c.message}
+            </a>
+            <p className="text-xs text-slate-500">{c.author} · {c.date ? timeAgo(c.date) : ""}</p>
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
+  const s = data as RepoActivityData;
+  return (
+    <div className="flex flex-col items-center gap-2 text-center">
+      <p className="text-sm text-slate-400">{s.repository} · last {s.periodDays} days</p>
+      <p className="text-4xl font-semibold text-slate-100">{s.commitCount}{s.truncated ? "+" : ""}</p>
+      <p className="text-xs text-slate-500">commits</p>
+      <p className="text-2xl font-semibold text-slate-100">{s.contributorCount}</p>
+      <p className="text-xs text-slate-500">active contributors</p>
+    </div>
+  );
+}
+
 function TimeBody({ widgetKey, data }: { widgetKey: string; data: unknown }) {
   if (widgetKey === "timezone_clock") {
     const c = data as ClockData;
@@ -169,6 +221,7 @@ export function WidgetCard({ instance, onDeleteRequest, onEditRequest }: WidgetC
   const { widgetType, config, refreshRateSeconds } = instance;
   const isWeather = widgetType.service.name === "Weather";
   const isSteam = widgetType.service.name === "Steam";
+  const isGithub = widgetType.service.name === "GitHub";
   const isTime = widgetType.service.name === "Time";
   const { data, error } = useWidgetData(instance);
 
@@ -200,7 +253,7 @@ export function WidgetCard({ instance, onDeleteRequest, onEditRequest }: WidgetC
         </div>
       </header>
 
-      {isWeather || isSteam || isTime ? (
+      {isWeather || isSteam || isGithub || isTime ? (
         <div className={`flex-1 overflow-auto text-sm ${isTime ? "flex min-h-0 flex-col" : ""}`}>
           {error && <p role="alert" className="mb-2 text-xs text-[var(--danger)]">{error}</p>}
           {data ? (
@@ -208,6 +261,8 @@ export function WidgetCard({ instance, onDeleteRequest, onEditRequest }: WidgetC
               <WeatherBody widgetKey={widgetType.key} data={data}/>
             ) : isSteam ? (
               <SteamBody widgetKey={widgetType.key} data={data} config={config}/>
+            ) : isGithub ? (
+              <GithubBody widgetKey={widgetType.key} data={data}/>
             ) : (
               <TimeBody widgetKey={widgetType.key} data={data}/>
             )
