@@ -28,6 +28,22 @@ interface MostPlayedData {
   games: { appId: number; name: string; coverUrl: string;minutes: number }[];
 }
 
+interface ClockData {
+  timezone: string;
+  time: string;
+  date: string;
+}
+
+interface CountdownData {
+  label: string;
+  targetDate: string;
+  reached: boolean;
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+}
+
 function formatMinutes(totalMinutes: number) {
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
@@ -73,10 +89,12 @@ function SteamBody({ widgetKey, data, config }: { widgetKey: string; data: unkno
     const elapsed = formatMinutes(g.elapsedMinutes ?? 0);
     if (config.display_mode === "detailed") {
       return (
-        <div className="flex flex-col gap-2">
-          <img src={g.coverUrl} alt={g.name} className="w-full rounded-md" />
-          <p className="font-semibold text-slate-100">{g.name}</p>
-          <p className="text-xs text-slate-400">Playing for {elapsed}</p>
+        <div className="flex h-full flex-col gap-2">
+          <img src={g.coverUrl} alt={g.name} className="min-h-0 w-full flex-1 rounded-md object-cover"/>
+          <div>
+            <p className="truncate font-semibold text-slate-100">{g.name}</p>
+            <p className="text-xs text-slate-400">Playing for {elapsed}</p>
+          </div>
         </div>
       );
     }
@@ -115,6 +133,32 @@ function SteamBody({ widgetKey, data, config }: { widgetKey: string; data: unkno
   );
 }
 
+function TimeBody({ widgetKey, data }: { widgetKey: string; data: unknown }) {
+  if (widgetKey === "timezone_clock") {
+    const c = data as ClockData;
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
+        <p className="text-base text-slate-400">{c.timezone}</p>
+        <p className="text-6xl font-semibold tabular-nums text-slate-100">{c.time}</p>
+        <p className="text-base capitalize text-slate-300">{c.date}</p>
+      </div>
+    );
+  }
+  const d = data as CountdownData;
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
+      <p className="text-base text-slate-400">{d.label}</p>
+      {d.reached ? (
+        <p className="text-3xl font-semibold text-slate-100">Date reached!</p>
+      ) : (
+        <p className="text-4xl font-semibold tabular-nums text-slate-100">
+          {d.days}d {d.hours}h {d.minutes}m {d.seconds}s
+        </p>
+      )}
+    </div>
+  );
+}
+
 interface WidgetCardProps {
   instance: WidgetInstance;
   onDeleteRequest: (instance: WidgetInstance) => void;
@@ -125,6 +169,7 @@ export function WidgetCard({ instance, onDeleteRequest, onEditRequest }: WidgetC
   const { widgetType, config, refreshRateSeconds } = instance;
   const isWeather = widgetType.service.name === "Weather";
   const isSteam = widgetType.service.name === "Steam";
+  const isTime = widgetType.service.name === "Time";
   const { data, error } = useWidgetData(instance);
 
   return (
@@ -155,14 +200,16 @@ export function WidgetCard({ instance, onDeleteRequest, onEditRequest }: WidgetC
         </div>
       </header>
 
-      {isWeather || isSteam ? (
-        <div className="flex-1 overflow-auto text-sm">
+      {isWeather || isSteam || isTime ? (
+        <div className={`flex-1 overflow-auto text-sm ${isTime ? "flex min-h-0 flex-col" : ""}`}>
           {error && <p role="alert" className="mb-2 text-xs text-[var(--danger)]">{error}</p>}
           {data ? (
             isWeather ? (
-              <WeatherBody widgetKey={widgetType.key} data={data} />
-            ) : (
+              <WeatherBody widgetKey={widgetType.key} data={data}/>
+            ) : isSteam ? (
               <SteamBody widgetKey={widgetType.key} data={data} config={config}/>
+            ) : (
+              <TimeBody widgetKey={widgetType.key} data={data}/>
             )
           ) : (
             !error && <p className="text-slate-500">Loading…</p>
@@ -178,7 +225,6 @@ export function WidgetCard({ instance, onDeleteRequest, onEditRequest }: WidgetC
           ))}
         </dl>
       )}
-
       <footer className="text-xs text-slate-500">Refreshes every {refreshRateSeconds}s</footer>
     </article>
   );
