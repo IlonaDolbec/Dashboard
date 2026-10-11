@@ -9,6 +9,15 @@ interface WidgetGridProps {
   onEditRequest: (instance: WidgetInstance) => void;
 }
 
+function getRowSpan(instance: WidgetInstance): number {
+  const thresholds: Record<string,{param: string; min: number}> = {
+    most_played_games: { param: "game_count", min: 6 },
+    forecast_overview: { param: "days", min: 10 },
+  };
+  const rule = thresholds[instance.widgetType.key];
+  return rule && Number(instance.config[rule.param]) >= rule.min ? 2 : 1;
+}
+
 export function WidgetGrid({ instances, onDeleteRequest, onReorder, onEditRequest}: WidgetGridProps) {
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
@@ -32,7 +41,7 @@ export function WidgetGrid({ instances, onDeleteRequest, onReorder, onEditReques
   return (
     <section
       aria-label="Your widgets"
-      className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+      className="grid auto-rows-[260px] grid-flow-dense grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
     >
       {instances.map((instance) => {
         const isDragged = draggedId === instance.id;
@@ -46,8 +55,8 @@ export function WidgetGrid({ instances, onDeleteRequest, onReorder, onEditReques
             onDragOver={(e) => (e.preventDefault(), setOverId(instance.id))}
             onDrop={() => handleDrop(instance.id)}
             onDragEnd={endDrag}
-            style={{ minHeight: `${instance.height * 180}px`}}
-            className={`cursor-grab rounded-lg active:cursor-grabbing ${isDragged ? "opacity-40" : ""} ${isTarget ? "ring-2 ring-[var(--accent)]" : ""}`}
+            style={{ gridRow: `span ${getRowSpan(instance)}` }}
+            className={`min-h-0 cursor-grab rounded-xl active:cursor-grabbing ${isDragged ? "opacity-40" : ""} ${isTarget ? "ring-2 ring-[var(--accent)]" : ""}`}
           >
             <WidgetCard instance={instance} onDeleteRequest={onDeleteRequest} onEditRequest={onEditRequest}/>
           </div>
