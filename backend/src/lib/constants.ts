@@ -10,3 +10,10 @@ export const STEAM_CDN_URL = "https://cdn.cloudflare.steamstatic.com/steam/apps"
 export const STEAM_OPENID_NS = "http://specs.openid.net/auth/2.0";
 export const STEAM_REQUEST_TIMEOUT_MS = 8000;
 export const MAX_GAME_COUNT = 50;
+
+export const GITHUB_API_URL = "https://api.github.com";
+export const GITHUB_REQUEST_TIMEOUT_MS = 8000;
+export const MAX_COMMIT_COUNT = 50;
+export const MAX_PERIOD_DAYS = 365;
+export const GITHUB_PAGE_SIZE = 100;
+export const GITHUB_MAX_STATS_PAGES = 10;

@@ -3,6 +3,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getCurrentWeather, getForecast, WeatherError } from "@/lib/weather";
 import { getCurrentlyPlaying, getMostPlayedGames, SteamError, CurrentlyPlaying } from "@/lib/steam";
+import { getRecentCommits, getRepoActivityStats, GithubError } from "@/lib/github";
+import { getValidAccessToken } from "@/lib/oauth";
 import { getClock, getCountdown, TimeError } from "@/lib/time";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -48,6 +50,23 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
                     Number(config.game_count),
                 );
             }
+        } else if (instance.widgetType.service.key === "github") {
+            const subscription = await prisma.subscription.findUnique({
+                where: {
+                    userId_serviceId: { userId: session.user.id, serviceId: instance.widgetType.serviceId },
+                },
+            });
+            const token = subscription
+                ? await getValidAccessToken(subscription, instance.widgetType.service)
+                : null;
+            if (!token) {
+                return NextResponse.json({ error: "GitHub account not linked" }, { status: 409 });
+            }
+            if (instance.widgetType.key === "recent_commits") {
+                data = await getRecentCommits(token, String(config.repository), Number(config.commit_count));
+            } else if (instance.widgetType.key === "repo_activity_stats") {
+                data = await getRepoActivityStats(token, String(config.repository), Number(config.period_days));
+            }
         } else if (instance.widgetType.service.key === "time") {
             if (instance.widgetType.key === "timezone_clock") {
                 data = getClock(String(config.timezone));
@@ -65,7 +84,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         });
         return NextResponse.json(data);
     } catch (err) {
-        if (err instanceof WeatherError || err instanceof SteamError || err instanceof TimeError) {
+        if (err instanceof WeatherError || err instanceof SteamError || err instanceof TimeError || err instanceof GithubError) {
             return NextResponse.json({ error: err.message }, { status: err.status });
         }
         return NextResponse.json({ error: "Failed to fetch widget data" }, { status: 500 });
