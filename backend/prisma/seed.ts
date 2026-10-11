@@ -48,6 +48,13 @@ const services: ServiceSeed[] = [
         description: "Link your Steam account to see what you are playing and your most played games.",
         authType: "OPENID",
     },
+    {
+        id: "time",
+        key: "time",
+        name: "Time",
+        description: "Clocks and countdowns. No account required.",
+        authType: "NONE",
+    },
 ];
 
 type WidgetTypeSeed = {
@@ -91,6 +98,25 @@ const widgetTypesByService: Record<string, WidgetTypeSeed[]> = {
             paramsSchema: [
                 { name: "order", type: "string", label: "Order (most or least played)" },
                 { name: "game_count", type: "integer", label: "Number of games" },
+            ],
+        },
+    ],
+    time: [
+        {
+            key: "timezone_clock",
+            name: "Timezone clock",
+            description: "Current time and date in a given timezone.",
+            paramsSchema: [
+                { name: "timezone", type: "string", label: "Timezone (ex: Europe/Paris)" },
+            ],
+        },
+        {
+            key: "countdown",
+            name: "Countdown",
+            description: "Time remaining until a given date.",
+            paramsSchema: [
+                { name: "label", type: "string", label: "Label" },
+                { name: "target_date", type: "string", label: "Target date (ex: 2026-12-31)" },
             ],
         },
     ],

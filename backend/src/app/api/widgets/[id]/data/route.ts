@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getCurrentWeather, getForecast, WeatherError } from "@/lib/weather";
 import { getCurrentlyPlaying, getMostPlayedGames, SteamError, CurrentlyPlaying } from "@/lib/steam";
+import { getClock, getCountdown, TimeError } from "@/lib/time";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     const session = await auth.api.getSession({ headers: req.headers });
@@ -47,6 +48,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
                     Number(config.game_count),
                 );
             }
+        } else if (instance.widgetType.service.key === "time") {
+            if (instance.widgetType.key === "timezone_clock") {
+                data = getClock(String(config.timezone));
+            } else if (instance.widgetType.key === "countdown") {
+                data = getCountdown(String(config.label), String(config.target_date));
+            }
         }
         if (data === undefined) {
             return NextResponse.json({ error: "This widget type has no data source" }, { status: 501 });
@@ -58,7 +65,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         });
         return NextResponse.json(data);
     } catch (err) {
-        if (err instanceof WeatherError || err instanceof SteamError) {
+        if (err instanceof WeatherError || err instanceof SteamError || err instanceof TimeError) {
             return NextResponse.json({ error: err.message }, { status: err.status });
         }
         return NextResponse.json({ error: "Failed to fetch widget data" }, { status: 500 });
