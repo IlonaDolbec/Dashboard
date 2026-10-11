@@ -13,6 +13,7 @@ function getRowSpan(instance: WidgetInstance): number {
   const thresholds: Record<string,{param: string; min: number}> = {
     most_played_games: { param: "game_count", min: 6 },
     forecast_overview: { param: "days", min: 10 },
+    recent_commits: { param: "commit_count", min: 10 },
   };
   const rule = thresholds[instance.widgetType.key];
   return rule && Number(instance.config[rule.param]) >= rule.min ? 2 : 1;

@@ -76,6 +76,7 @@ The comparison of at least 3 options per layer (frontend, backend, database) and
 git clone <repo-url>
 cd <repository>
 cp .env.example .env      # fill in the required values, see below
+docker compose exec server npx prisma db seed # load the available services and widgets (run once)
 docker compose up -d --build
 ```
 
@@ -142,6 +143,8 @@ curl http://localhost:<SERVER_PORT>/about.json
 |---|---|---|---|---|
 | Weather | No | `city_temperature` | Current temperature, sky and precipitation for a city | `city` (string) |
 | Weather | No | `forecast_overview` | Daily forecast overview for a city | `city` (string), `days` (integer) |
+| GitHub | Yes (OAuth 2.0) | `recent_commits` | Latest commits of a repository | `repository` (string), `commit_count` (integer) |
+| GitHub | Yes (OAuth 2.0) | `repo_activity_stats` | Activity statistics of a repository over a period | `repository` (string), `period_days` (integer) |
 | Steam | Yes (OpenID) | `currently_playing` | The game your linked Steam account is playing right now | `display_mode` (string: `compact` or `detailed`) |
 | Steam | Yes (OpenID) | `most_played_games` | Games sorted by total playtime | `order` (string: `most` or `least`), `game_count` (integer) |
 | Time | No | `timezone_clock` | Current time and date in a given timezone | `timezone` (string, ex: `Europe/Paris`) |
