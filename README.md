@@ -76,8 +76,9 @@ The comparison of at least 3 options per layer (frontend, backend, database) and
 git clone <repo-url>
 cd <repository>
 cp .env.example .env      # fill in the required values, see below
+docker compose build
+docker compose up
 docker compose exec server npx prisma db seed # load the available services and widgets (run once)
-docker compose up -d --build
 ```
 
 The `server` container applies pending Prisma migrations automatically on startup. The seed step registers the services and widget types in the database: run it once after the first start, and again whenever you add a service or a widget (it is safe to run several times).
